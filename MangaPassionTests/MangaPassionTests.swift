@@ -10,8 +10,11 @@ import Testing
 
 struct MangaPassionTests {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+    @Test func fetchMangasReturnsResults() async throws {
+        let service = MangaService()
+        let response = try await service.fetchMangas(page: 1, per: 5)
+        #expect(response.items.count == 5)
+        #expect(response.metadata.total > 0)
     }
 
 }
