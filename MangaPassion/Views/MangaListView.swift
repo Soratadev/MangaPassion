@@ -12,10 +12,15 @@ struct MangaListView: View {
     var body: some View {
         NavigationStack {
             List(viewModel.mangas) { manga in
-                MangaRow(manga: manga)
-                    .task {
-                        await viewModel.loadNextPageIfNeeded(currentItem: manga)
-                    }
+                NavigationLink(value: manga) {
+                    MangaRow(manga: manga)
+                }
+                .task {
+                    await viewModel.loadNextPageIfNeeded(currentItem: manga)
+                }
+            }
+            .navigationDestination(for: Manga.self) { manga in
+                MangaDetailView(manga: manga)
             }
             .navigationTitle("My Mangas")
             .overlay {
