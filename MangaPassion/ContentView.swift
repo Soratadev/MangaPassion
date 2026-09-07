@@ -9,7 +9,13 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        MangaListView()
+        TabView {
+            MangaListView()
+                .tabItem { Label("Browse", systemImage: "books.vertical") }
+
+            AdvancedSearchView()
+                .tabItem { Label("Search", systemImage: "magnifyingglass") }
+        }
     }
 }
 

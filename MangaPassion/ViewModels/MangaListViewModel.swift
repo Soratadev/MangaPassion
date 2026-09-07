@@ -8,34 +8,60 @@ import Foundation
 
 @Observable
 final class MangaListViewModel {
+    enum Source: Equatable {
+        case all
+        case category(MangaCategory)
+        case search(String)
+    }
+
     private(set) var mangas: [Manga] = []
-    private(set) var isLoading: Bool = false
+    private(set) var isLoading = false
     var errorMessage: String?
-    
+    private(set) var source: Source = .all
+
     private let service: MangaService
     private var currentPage = 1
     private let perPage = 20
     private var totalMangas = 0
-    private var category: MangaCategory?
-    
+
     init(service: MangaService = MangaService()) {
         self.service = service
     }
-    
+
     var canLoadMore: Bool {
         mangas.count < totalMangas
     }
-    
+
+    func setSource(_ source: Source) async {
+        guard source != self.source else { return }
+        self.source = source
+        await loadFirstPage()
+    }
+
+    func loadFirstPage() async {
+        currentPage = 1
+        mangas = []
+        await loadCurrentPage()
+    }
+
+    func loadNextPageIfNeeded(currentItem manga: Manga) async {
+        guard manga == mangas.last, canLoadMore, !isLoading else { return }
+        currentPage += 1
+        await loadCurrentPage()
+    }
+
     private func loadCurrentPage() async {
         isLoading = true
         errorMessage = nil
-
         do {
             let response: PagedResponse<Manga>
-            if let category {
-                response = try await service.fetchMangas(filteredBy: category, page: currentPage, per: perPage)
-            } else {
+            switch source {
+            case .all:
                 response = try await service.fetchMangas(page: currentPage, per: perPage)
+            case .category(let category):
+                response = try await service.fetchMangas(filteredBy: category, page: currentPage, per: perPage)
+            case .search(let text):
+                response = try await service.searchMangas(containing: text, page: currentPage, per: perPage)
             }
             mangas.append(contentsOf: response.items)
             totalMangas = response.metadata.total
@@ -47,23 +73,4 @@ final class MangaListViewModel {
         }
         isLoading = false
     }
-    
-    func loadFirstPage() async {
-        currentPage = 1
-        mangas = []
-        await loadCurrentPage()
-    }
-    
-    func loadNextPageIfNeeded(currentItem manga: Manga) async {
-        guard manga == mangas.last, canLoadMore, !isLoading else { return }
-        currentPage += 1
-        await loadCurrentPage()
-    }
-    
-    func setCategory(_ category: MangaCategory?) async {
-            guard category != self.category else { return }
-            self.category = category
-            await loadFirstPage()
-        }
 }
-

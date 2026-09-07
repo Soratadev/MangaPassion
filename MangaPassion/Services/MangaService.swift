@@ -41,3 +41,40 @@ extension MangaService {
         )
     }
 }
+
+extension MangaService {
+    func searchMangas(beginningWith text: String) async throws -> [Manga] {
+        try await APIClient.shared.request(path: "/search/mangasBeginsWith/\(text)")
+    }
+
+    func searchMangas(containing text: String, page: Int = 1, per: Int = 20) async throws -> PagedResponse<Manga> {
+        try await APIClient.shared.request(
+            path: "/search/mangasContains/\(text)",
+            queryItems: [
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "per", value: String(per))
+            ]
+        )
+    }
+
+    func searchAuthors(matching text: String) async throws -> [Author] {
+        try await APIClient.shared.request(path: "/search/author/\(text)")
+    }
+
+    func fetchManga(id: Int) async throws -> Manga {
+        try await APIClient.shared.request(path: "/search/manga/\(id)")
+    }
+
+    func searchMangas(customSearch: CustomSearch, page: Int = 1, per: Int = 20) async throws -> PagedResponse<Manga> {
+        let body = try JSONEncoder().encode(customSearch)
+        return try await APIClient.shared.request(
+            path: "/search/manga",
+            method: .post,
+            queryItems: [
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "per", value: String(per))
+            ],
+            body: body
+        )
+    }
+}

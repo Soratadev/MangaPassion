@@ -16,8 +16,20 @@ struct MangaListView: View {
     @State private var filterOptions = FilterOptionsViewModel()
     @State private var displayMode: DisplayMode = .list
     @State private var showingFilters = false
-    @State private var activeCategory: MangaCategory?
-    
+    @State private var searchText = ""
+
+    private var activeCategory: MangaCategory? {
+        if case .category(let category) = viewModel.source { category } else { nil }
+    }
+
+    private var navigationTitleText: String {
+        switch viewModel.source {
+        case .all: "My Mangas"
+        case .category(let category): category.displayValue
+        case .search: "Search results"
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Group {
@@ -38,13 +50,25 @@ struct MangaListView: View {
             .navigationDestination(for: Manga.self) { manga in
                 MangaDetailView(manga: manga)
             }
-            .navigationTitle(activeCategory?.displayValue ?? "My Mangas")
+            .navigationTitle(navigationTitleText)
             .overlay {
                 if viewModel.isLoading && viewModel.mangas.isEmpty {
                     ProgressView()
                 } else if let message = viewModel.errorMessage, viewModel.mangas.isEmpty {
                     ContentUnavailableView(message, systemImage: "wifi.slash")
                 }
+            }
+            .searchable(text: $searchText, prompt: "Search manga titles")
+            .task(id: searchText) {
+                if searchText.isEmpty {
+                    if case .search = viewModel.source {
+                        await viewModel.setSource(.all)
+                    }
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(400))
+                guard !Task.isCancelled else { return }
+                await viewModel.setSource(.search(searchText))
             }
             .toolbar {
                 ToolbarItem(placement: .principal) {
@@ -68,9 +92,10 @@ struct MangaListView: View {
                     options: filterOptions,
                     activeCategory: activeCategory,
                     onSelect: { category in
-                        activeCategory = category
                         showingFilters = false
-                        Task { await viewModel.setCategory(category) }
+                        Task {
+                            await viewModel.setSource(category.map(MangaListViewModel.Source.category) ?? .all)
+                        }
                     }
                 )
             }
@@ -85,7 +110,7 @@ struct MangaListView: View {
 
 struct MangaRow: View {
     let manga: Manga
-    
+
     var body: some View {
         HStack(spacing: 12) {
             AsyncImage(url: manga.mainPicture) { image in
@@ -95,7 +120,7 @@ struct MangaRow: View {
             }
             .frame(width: 50, height: 70)
             .clipShape(RoundedRectangle(cornerRadius: 6))
-            
+
             VStack(alignment: .leading) {
                 Text(manga.title).font(.headline)
                 if let score = manga.score {
