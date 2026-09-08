@@ -8,12 +8,17 @@ import SwiftUI
 
 struct MangaDetailView: View {
     let manga: Manga
+    @Environment(SessionViewModel.self) private var session
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
                 infoRow
+                
+                if session.isLoggedIn {
+                    CollectionSection(manga: manga)
+                }
                 
                 if !manga.authors.isEmpty {
                     authorsSection

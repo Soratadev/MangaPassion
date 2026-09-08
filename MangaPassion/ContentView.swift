@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(SessionViewModel.self) private var session
+    @Environment(CollectionViewModel.self) private var collection
+
     var body: some View {
         TabView {
             MangaListView()
@@ -15,9 +18,19 @@ struct ContentView: View {
 
             AdvancedSearchView()
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }
-            
+
+            CollectionView()
+                .tabItem { Label("My Collection", systemImage: "books.vertical.fill") }
+
             AccountView()
                 .tabItem { Label("Account", systemImage: "person.circle") }
+        }
+        .task(id: session.token) {
+            if let token = session.token {
+                await collection.loadCollection(token: token)
+            } else {
+                collection.clear()
+            }
         }
     }
 }
