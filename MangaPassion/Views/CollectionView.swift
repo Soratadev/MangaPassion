@@ -9,41 +9,53 @@ import SwiftUI
 struct CollectionView: View {
     @Environment(SessionViewModel.self) private var session
     @Environment(CollectionViewModel.self) private var collection
+    @State private var selectedManga: Manga?
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if !session.isLoggedIn {
-                    ContentUnavailableView("Log in to see your collection", systemImage: "person.crop.circle.badge.exclamationmark")
-                } else if collection.isLoading && collection.entries.isEmpty {
-                    ProgressView()
-                } else if collection.entries.isEmpty {
-                    ContentUnavailableView("Your collection is empty", systemImage: "books.vertical")
-                } else {
-                    List {
-                        ForEach(collection.entries) { entry in
-                            NavigationLink(value: entry.manga) {
-                                CollectionRow(entry: entry)
-                            }
-                        }
-                        .onDelete { indexSet in
-                            Task {
-                                guard let token = session.token else { return }
-                                for index in indexSet {
-                                    await collection.remove(mangaID: collection.entries[index].manga.id, token: token)
-                                }
-                            }
-                        }
+        NavigationSplitView {
+            sidebarContent
+                .navigationTitle("My Collection")
+                .refreshable {
+                    if let token = session.token {
+                        await collection.loadCollection(token: token)
                     }
                 }
+        } detail: {
+            if let selectedManga {
+                MangaDetailView(manga: selectedManga)
+            } else {
+                ContentUnavailableView("Select a manga", systemImage: "book.closed")
             }
-            .navigationDestination(for: Manga.self) { manga in
-                MangaDetailView(manga: manga)
-            }
-            .navigationTitle("My Collection")
-            .refreshable {
+        }
+    }
+
+    @ViewBuilder
+    private var sidebarContent: some View {
+        if !session.isLoggedIn {
+            ContentUnavailableView("Log in to see your collection", systemImage: "person.crop.circle.badge.exclamationmark")
+        } else if collection.isLoading && collection.entries.isEmpty {
+            ProgressView()
+        } else if let message = collection.errorMessage, collection.entries.isEmpty {
+            ErrorStateView(message: message) {
                 if let token = session.token {
                     await collection.loadCollection(token: token)
+                }
+            }
+        } else if collection.entries.isEmpty {
+            ContentUnavailableView("Your collection is empty", systemImage: "books.vertical")
+        } else {
+            List(selection: $selectedManga) {
+                ForEach(collection.entries) { entry in
+                    CollectionRow(entry: entry)
+                        .tag(entry.manga)
+                }
+                .onDelete { indexSet in
+                    Task {
+                        guard let token = session.token else { return }
+                        for index in indexSet {
+                            await collection.remove(mangaID: collection.entries[index].manga.id, token: token)
+                        }
+                    }
                 }
             }
         }

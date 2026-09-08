@@ -9,9 +9,10 @@ import SwiftUI
 struct AdvancedSearchView: View {
     @State private var viewModel = AdvancedSearchViewModel()
     @State private var filterOptions = FilterOptionsViewModel()
+    @State private var selectedManga: Manga?
 
     var body: some View {
-        NavigationStack {
+        NavigationSplitView {
             Form {
                 Section("Title & author") {
                     TextField("Title", text: $viewModel.title)
@@ -39,22 +40,31 @@ struct AdvancedSearchView: View {
                 if viewModel.hasSearched {
                     Section("Results") {
                         ForEach(viewModel.results) { manga in
-                            NavigationLink(value: manga) {
+                            Button {
+                                selectedManga = manga
+                            } label: {
                                 MangaRow(manga: manga)
                             }
+                            .buttonStyle(.plain)
                             .task { await viewModel.loadNextPageIfNeeded(currentItem: manga) }
                         }
                         if viewModel.results.isEmpty && !viewModel.isLoading {
                             Text("No results.").foregroundStyle(.secondary)
                         }
+                        if let message = viewModel.errorMessage {
+                            Text(message).foregroundStyle(.red)
+                        }
                     }
                 }
             }
-            .navigationDestination(for: Manga.self) { manga in
-                MangaDetailView(manga: manga)
-            }
             .navigationTitle("Advanced Search")
             .task { await filterOptions.loadIfNeeded() }
+        } detail: {
+            if let selectedManga {
+                MangaDetailView(manga: selectedManga)
+            } else {
+                ContentUnavailableView("Select a manga", systemImage: "book.closed")
+            }
         }
     }
 

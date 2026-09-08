@@ -8,6 +8,7 @@ import SwiftUI
 
 struct MangaGridView: View {
     let mangas: [Manga]
+    @Binding var selection: Manga?
     let onAppearItem: (Manga) async -> Void
     
     private let columns = [GridItem(.adaptive(minimum: 110), spacing: 12)]
@@ -16,7 +17,9 @@ struct MangaGridView: View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(mangas) { manga in
-                    NavigationLink(value: manga) {
+                    Button {
+                        selection = manga
+                    } label: {
                         MangaGridCell(manga: manga)
                     }
                     .buttonStyle(.plain)
