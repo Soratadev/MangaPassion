@@ -97,7 +97,7 @@ struct MangaDetailView: View {
         }
     }
     
-    private func textSection(title: String, text: String) -> some View {
+    private func textSection(title: LocalizedStringKey, text: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.headline)
             Text(text).font(.body)

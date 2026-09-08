@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct MangaPassionApp: App {
+    @State private var session = SessionViewModel()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(session)
+                .task { await session.restoreSession() }
         }
     }
 }

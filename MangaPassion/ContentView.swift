@@ -15,6 +15,9 @@ struct ContentView: View {
 
             AdvancedSearchView()
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }
+            
+            AccountView()
+                .tabItem { Label("Account", systemImage: "person.circle") }
         }
     }
 }

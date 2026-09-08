@@ -58,7 +58,7 @@ struct AdvancedSearchView: View {
         }
     }
 
-    private func categorySection(_ title: String, options: [String], selection: Binding<Set<String>>) -> some View {
+    private func categorySection(_ title: LocalizedStringKey, options: [String], selection: Binding<Set<String>>) -> some View {
         Section(title) {
             ForEach(options, id: \.self) { option in
                 Button {

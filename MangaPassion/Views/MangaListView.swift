@@ -9,6 +9,13 @@ import SwiftUI
 enum DisplayMode: String, CaseIterable {
     case list = "List"
     case grid = "Grid"
+    
+    var label: LocalizedStringResource {
+        switch self {
+        case .list: "List"
+        case .grid: "Grid"
+        }
+    }
 }
 
 struct MangaListView: View {
@@ -74,7 +81,7 @@ struct MangaListView: View {
                 ToolbarItem(placement: .principal) {
                     Picker("Display", selection: $displayMode) {
                         ForEach(DisplayMode.allCases, id: \.self) { mode in
-                            Text(mode.rawValue).tag(mode)
+                            Text(mode.label).tag(mode)
                         }
                     }
                     .pickerStyle(.segmented)

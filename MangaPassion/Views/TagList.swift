@@ -7,7 +7,7 @@
 import SwiftUI
 
 struct TagList: View {
-    let title: String
+    let title: LocalizedStringKey
     let items: [String]
     
     var body: some View {
